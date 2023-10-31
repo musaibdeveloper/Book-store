@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from  "jsonwebtoken"
 import randomString from "../../utils/random.js"
 import config from "config"
+import sendSMS from "../../utils/sms.js"
 
 import userModel from "../../models/user/user.js"
 import { userRegisterValidations, errorMiddelware } from "../../middleware/index.js"
@@ -12,14 +13,18 @@ const router = express.Router();
 router.post("/register", userRegisterValidations(), errorMiddelware, async (req, res) => {
     try {
         let userData = new userModel(req.body);
+
+        
         
         //checking
-        let emailCheck = await userModel.findOne({ email: userData.email })
+        let emailCheck = await userModel.findOne({ email: userData.email });
+
         let phoneCheck = await userModel.findOne({ phone: userData.phone });
-        
+
+
         if (emailCheck || phoneCheck) {
             res.status(200).json({ msg: "Email and phone already exist" });
-        }
+        }    
 
         //hashing
         let hashing = await bcrypt.hash(userData.password, 10);
@@ -40,6 +45,15 @@ router.post("/register", userRegisterValidations(), errorMiddelware, async (req,
             config.get("JWTKEY"),
             { expiresIn: "60000" }
         );
+
+        // sendSMS
+
+        sendSMS({
+         body: `Hi ${userData.firstName}, Please click the given link to verify your phone ${config.get("URL")}/phone/verify/${phoneToken}`,
+           phonenumber:userData.phone,
+         });
+
+       
 
         console.log(`${config.get("URL")}/user/email/verify/${emailToken}`);
         console.log(`${config.get("URL")}/user/phone/verify/${phoneToken}`);

@@ -6,7 +6,7 @@ import userRouter from "./controllers/Users/index.js"
 
 let app = express();
 
-const PORT = 9000;
+const PORT = config.get("PORT");
 
 app.use(express.json());
 app.get("/", (req, res) => {
