@@ -18,7 +18,7 @@ router.post("/register", userRegisterValidations(), errorMiddelware, async (req,
         let phoneCheck = await userModel.findOne({ phone: userData.phone });
         
         if (emailCheck || phoneCheck) {
-            res.status(200).json({ msg: "email and phone already exist" });
+            res.status(200).json({ msg: "Email and phone already exist" });
         }
 
         //hashing
@@ -71,13 +71,10 @@ router.get("/email/verify/:token", async (req, res) => {
             "userverifytoken.email": verify.email,
         });
         if (!userData) {
-            return res
-                .status(200)
-                .json({ success: "The Email has been Verified Already." });
+            return res.status(200).json({ success: "The Email has been Verified Already." });
         }
         // console.log(userData);
         userData.userverified.email = true;
-
         await userData.save();
         res.status(200).json({ success: "The Email has been Verified." });
     } catch (error) {
@@ -94,9 +91,7 @@ router.get("/phone/verify/:token", async (req, res) => {
         // console.log(verify);
 
         if (!verify) {
-            return res
-                .status(401)
-                .json({ sucess: false, msg: "Token Expire , Register Again" });
+            return res.status(401).json({ sucess: false, msg: "Token Expire , Register Again" });
         }
 
         let userData = await userModel.findOne({
@@ -105,9 +100,7 @@ router.get("/phone/verify/:token", async (req, res) => {
         // console.log(userData);
 
         if (!userData) {
-            return res
-                .status(200)
-                .json({ success: "The Phone has been Verified Already." });
+            return res.status(200).json({ success: "The Phone has been Verified Already." });
         }
 
         userData.userverified.phone = true;
