@@ -1,12 +1,13 @@
 import express from "express";
-import bcrypt from "bcrypt"; 
-import jwt from  "jsonwebtoken"
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken"
 import randomString from "../../utils/random.js"
 import config from "config"
 import sendSMS from "../../utils/sms.js"
 
 import userModel from "../../models/user/user.js"
 import { userRegisterValidations, errorMiddelware } from "../../middleware/index.js"
+import user from "../../models/user/user.js";
 
 const router = express.Router();
 
@@ -14,8 +15,8 @@ router.post("/register", userRegisterValidations(), errorMiddelware, async (req,
     try {
         let userData = new userModel(req.body);
 
-        
-        
+
+
         //checking
         let emailCheck = await userModel.findOne({ email: userData.email });
 
@@ -24,7 +25,7 @@ router.post("/register", userRegisterValidations(), errorMiddelware, async (req,
 
         if (emailCheck || phoneCheck) {
             res.status(200).json({ msg: "Email and phone already exist" });
-        }    
+        }
 
         //hashing
         let hashing = await bcrypt.hash(userData.password, 10);
@@ -49,11 +50,11 @@ router.post("/register", userRegisterValidations(), errorMiddelware, async (req,
         // sendSMS
 
         sendSMS({
-         body: `Hi ${userData.firstName}, Please click the given link to verify your phone ${config.get("URL")}/phone/verify/${phoneToken}`,
-           phonenumber:userData.phone,
-         });
+            body: `Hi ${userData.firstName}, Please click the given link to verify your phone ${config.get("URL")}/user/phone/verify/${phoneToken}`,
+            to: userData.phone,
+        });
 
-       
+
 
         console.log(`${config.get("URL")}/user/email/verify/${emailToken}`);
         console.log(`${config.get("URL")}/user/phone/verify/${phoneToken}`);
@@ -125,6 +126,100 @@ router.get("/phone/verify/:token", async (req, res) => {
         res.status(500).json({ sucess: false, msg: "Internel Server Error" });
     }
 });
+
+router.post("/login", async (req, res) => {
+    try {
+
+        let { email, password } = req.body
+        letemailfind = await userModel.find({ email: email });
+        if (!emailfind) {
+            return ("Please Register")
+        }
+
+        let verifypassword = await userModel.find({ password: password });
+        if (!verifypassword) {
+            return ("Incorrect passowrd")
+        };
+
+        res.status(200).json({ msg: "User login successfully" })
+
+
+
+    } catch (error) {
+        res.status(500).json({ msg: "Internal Server Error" })
+    }
+})
+
+// Get-All
+
+router.get("/get-all", async (req, res) => {
+
+    try {
+        let UserAllData = await userModel.find({});
+        res.status(200).json(UserAllData)
+
+    } catch (error) {
+        res.status(500).json({ msg: "Internal Server error" })
+    }
+});
+
+
+// Get by ID
+
+router.get("/get/:ID", async (req, res) => {
+    try {
+        let id = req.params.ID;
+        let userData = await userModel.findById(id);
+        res.status(200).json(userData);
+    } catch (error) {
+        res.status(500).json(error);
+    }
+});
+
+// Update by ID
+router.put("/update/:ID", async (req, res) => {
+    try {
+        let id = req.params.ID;
+        let userData = req.body;
+        await userModel.findByIdAndUpdate(
+            {
+                _id: id,
+            },
+            {
+                $set: userData,
+            },
+            {
+                new: true,
+            }
+        );
+        res.status(200).json({ msg: "User data is Updated." });
+    } catch (error) {
+        res.status(500).json(error);
+    }
+});
+
+router.delete("/delete-all", async (req, res) => {
+    try {
+        let userDataErase = await userModel.deleteMany({});
+        res.status(200).json({ msg: "All users data is deleted!!" })
+    } catch (error) {
+        res.status(500).json({ msg: "Internal Server error" })
+    }
+})
+
+
+router.delete("/delete/:id", async (req, res) => {
+    try {
+
+        let DeleteUserData = req.params;
+        await userModel.findOneAndDelete(DeleteUserData);
+        res.status(200).json({ msg: "User deleted successfully" })
+
+    } catch (error) {
+        res.status(500).json({ msg: "Internal Server Error" })
+    }
+})
+
 
 
 export default router;
